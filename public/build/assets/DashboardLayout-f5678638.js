@@ -1,0 +1,1 @@
+import{u as s,j as o}from"./app-623ed0f4.js";import{H as t}from"./Homepage-08511e85.js";import"./Box-957a2bf3.js";import"./axios-28bc18a3.js";import"./IconButton-3addbdd0.js";import"./listItemTextClasses-8727f840.js";const x=({children:r})=>(s(),o.jsx("div",{className:"flex",children:o.jsx(t,{foo:r})}));export{x as default};
