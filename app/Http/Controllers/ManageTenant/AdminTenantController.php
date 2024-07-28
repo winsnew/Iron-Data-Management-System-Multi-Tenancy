@@ -8,17 +8,18 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class AdminTenantController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $tenants = Tenant::with('domains')->get();
         $tenants = $tenants->map(function ($tenant) {
             return [
                 'id' => $tenant->id,
-                'name' => $tenant->data['name'] ?? '',  // Asumsi nama tenant ada di data field
-                'email' => $tenant->data['email'] ?? '',  // Asumsi email tenant ada di data field
+                'name' => $tenant->data['name'] ?? '',
+                'email' => $tenant->data['email'] ?? '',
                 'domain' => $tenant->domains->isNotEmpty() ? $tenant->domains->first()->domain : '',
                 'database' => $tenant->database_name,
                 'status' => $tenant->status,
@@ -41,7 +42,7 @@ class AdminTenantController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
-        // Create user
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -49,10 +50,10 @@ class AdminTenantController extends Controller
             'domain' => $request->domain,
         ]);
 
-        // Create tenant
+
         $tenant = Tenant::create(['id' => $request->domain]);
 
-        // Optionally, add domain to tenant if needed
+
         $tenant->domains()->create([
             'domain' => $request->domain . '.' . env('APP_CENTRAL_DOMAIN'),
         ]);
@@ -66,66 +67,92 @@ class AdminTenantController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'domain' => 'required|string|max:255|unique:tenants,id,' . $id,
             'status' => 'required|string|max:255',
         ]);
     
-        // If validation fails, return the errors
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
     
-        // Find the user by ID
-        $user = User::findOrFail($id);
-        // Find the tenant by user's domain
-        $tenant = Tenant::findOrFail($user->domain);
+        try {
+            // Find the tenant by ID
+            $tenant = Tenant::findOrFail($id);
     
-        // Update the user data
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->domain = $request->domain; // Update domain in user as well
-        $user->status = $request->status; // Add status field in the User model if not already present
-        $user->save();
+            // Find the associated user by the tenant's current domain
+            $user = User::where('domain', $tenant->id)->firstOrFail();
     
-        // Update the tenant data if domain is changed
-        if ($request->domain !== $user->domain) {
-            $tenant->id = $request->domain;
-            $tenant->save();
+            // Update the tenant domain if it has changed
+            if ($tenant->id !== $request->domain) {
+                // Update user domain
+                $user->domain = $request->domain;
+                $user->save();
     
-            // Optionally, update tenant domains if needed
-            $tenant->domains()->updateOrCreate(
-                ['tenant_id' => $tenant->id],
-                ['domain' => $request->domain . '.' . env('APP_CENTRAL_DOMAIN')]
-            );
-        }
+                // Update tenant id
+                $tenant->id = $request->domain;
     
-        // Update tenant status if it's a field in the Tenant model
-        if ($tenant->status !== $request->status) {
+                $tenant->domains()->updateOrCreate(
+                    ['tenant_id' => $tenant->id],
+                    ['domain' => $request->domain . '.' . env('APP_CENTRAL_DOMAIN')]
+                );
+            }
+    
+            // Update tenant status
             $tenant->status = $request->status;
             $tenant->save();
-        }
     
-        // Return a successful response
-        return response()->json([
-            'message' => 'Tenant updated successfully!',
-            'tenant' => $tenant,
-        ], 200);
+            // Commit the transaction
+            DB::commit();
+    
+            return response()->json([
+                'message' => 'Tenant updated successfully!',
+                'tenant' => $tenant,
+            ], 200);
+    
+        } catch (\Exception $e) {
+            // Rollback the transaction in case of an error
+            DB::rollBack();
+            return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
     }
 
-    public function destroy ($id)
+    public function destroy($id)
     {
-        $tenant = Tenant::findOrFail($id);
+        DB::beginTransaction();
 
-        $user = User::where('domain', $tenant->id->first());
-        if($user) {
-            $user->delete();
+        try {
+            $tenant = Tenant::find($id);
+
+            if (!$tenant) {
+                DB::rollBack();
+                return response()->json(['error' => 'Tenant not found'], 404);
+            }
+
+            $email = $tenant->data['email'] ?? null;
+            if ($email) {
+                $user = User::where('email', $email)->first();
+                if ($user) {
+                    $user->delete();
+                }
+            }
+            $databaseName = $tenant->database()->getName();
+
+            if (DB::select("SHOW DATABASES LIKE '{$databaseName}'")) {
+                try {
+                    DB::statement("DROP DATABASE IF EXISTS `{$databaseName}`");
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json(['error' => "Error dropping database '{$databaseName}': " . $e->getMessage()], 500);
+                }
+            }
+
+            $tenant->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Tenant deleted successfully!'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
-
-        $tenant->delete();
-        return response()->json([
-            'message' => 'Tenant Succesfully Deleted'
-        ], 200);
     }
 }
