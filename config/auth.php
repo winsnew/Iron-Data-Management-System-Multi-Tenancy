@@ -14,9 +14,10 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
-        'passwords' => 'users',
+        'guard' => 'central',
+        'passwords' => 'central',
     ],
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -36,8 +37,8 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
+        'central' => [
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
         'tenant' => [
@@ -99,8 +100,8 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
+        'admin' => [
+            'provider' => 'admins',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,

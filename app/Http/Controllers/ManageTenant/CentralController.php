@@ -3,46 +3,34 @@
 namespace App\Http\Controllers\ManageTenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Tenant;
+use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class CentralController extends Controller
 {
-    public function store(Request $request)
+    public function loginAdmin(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'domain' => 'required|string|max:255|unique:tenants,id',
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+        if (Auth::guard('central')->attempt($credentials)) {
+            $token = Auth::guard('central')->user()->createToken('auth-token')->plainTextToken;
+            return response()->json(['message' => 'Login successful'], 200);
         }
 
-        // Create user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'domain' => $request->domain,
-        ]);
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
 
-        // Create tenant
-        $tenant = Tenant::create(['id' => $request->domain]);
-
-        // Optionally, add domain to tenant if needed
-        $tenant->domains()->create([
-            'domain' => $request->$user->domain . '.' . env('APP_CENTRAL_DOMAIN'),
-        ]);
-
-        return response()->json([
-            'message' => 'Tenant created successfully!',
-            'tenant' => $tenant,
-        ], 201);
+    public function logoutAdmin(Request $request)
+    {
+        Auth::guard('central')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return response()->json(['message' => 'Logout successful'], 200);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ManageTenant\AdminTenantController;
+use App\Http\Controllers\ManageTenant\CentralController;
 use App\Http\Controllers\ManageTenant\UserController;
 use App\Http\Controllers\Purchase\OrderDetailRawController;
 use App\Models\Tenants\User;
@@ -22,6 +23,11 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::apiResource(
-    'tenants', AdminTenantController::class,
-);
+Route::post('/login', [CentralController::class, 'loginAdmin']);
+Route::post('/central/logout', [CentralController::class, 'logoutAdmin']);
+
+Route::middleware(['auth:central'])->group(function() {
+    Route::apiResource(
+        'tenants', AdminTenantController::class,
+    );
+});
