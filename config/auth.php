@@ -41,6 +41,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        'central' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
         'tenant' => [
             'driver' => 'session',
             'provider' => 'tenants',
@@ -69,15 +73,15 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
         ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
+        ],
         'tenants' => [
             'driver' => 'eloquent',
             'model' => App\Models\Tenants\User::class,
         ]
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
     ],
 
     /*
@@ -101,6 +105,12 @@ return [
 
     'passwords' => [
         'admin' => [
+            'provider' => 'admins',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'admins' => [
             'provider' => 'admins',
             'table' => 'password_reset_tokens',
             'expire' => 60,

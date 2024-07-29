@@ -493,16 +493,17 @@ export default function Homepage({ children }) {
 
               </List>
             </Collapse>
-
-            <ListItemButton onClick={toggleSubSales}>
+            {/* sales sidebar*/}
+            {/* <ListItemButton onClick={toggleSubSales}>
               <ListItemIcon>
                 <PointOfSaleRoundedIcon />
               </ListItemIcon>
               <ListItemText primary="Sales" />
               {isSubSalesOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+            </ListItemButton> */}
+
             {/* Submenu for Sales */}
-            <Collapse in={isSubSalesOpen} timeout="auto" unmountOnExit>
+            {/* <Collapse in={isSubSalesOpen} timeout="auto" unmountOnExit>
               <List
                 component="div"
                 disablePadding
@@ -533,19 +534,19 @@ export default function Homepage({ children }) {
                 </ListItem>
 
               </List>
-            </Collapse>
+            </Collapse> */}
 
-            <ListItemButton onClick={toggleSubFinance}>
+            {/* <ListItemButton onClick={toggleSubFinance}>
               <ListItemIcon>
                 <AccountBalanceIcon />
               </ListItemIcon>
               <ListItemText primary="Finance" />
               {isSubFinanceOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+            </ListItemButton> */}
 
 
             {/* Submenu for Finance */}
-            <Collapse in={isSubFinanceOpen} timeout="auto" unmountOnExit>
+            {/* <Collapse in={isSubFinanceOpen} timeout="auto" unmountOnExit>
               <List
                 component="div"
                 disablePadding
@@ -586,14 +587,14 @@ export default function Homepage({ children }) {
                   <ListItemText primary="Account Receivable" />
                 </ListItem>
               </List>
-            </Collapse>
-            <ListItemButton onClick={toggleSubReport}>
+            </Collapse> */}
+            {/* <ListItemButton onClick={toggleSubReport}>
               <ListItemIcon>
                 <BarChartIcon />
               </ListItemIcon>
               <ListItemText primary="Report" />
               {isSubReportOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+            </ListItemButton> */}
           </List>
           {/* Submenu for Report */}
           <Collapse in={isSubReportOpen} timeout="auto" unmountOnExit>
