@@ -8,7 +8,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
+use Illuminate\Support\Facades\Auth;
+=======
 use Illuminate\Support\Facades\DB;
+>>>>>>> e0d6f0e0fc13eb4b711ce13335c702cda739b408
 
 class AdminTenantController extends Controller
 {

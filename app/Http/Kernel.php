@@ -27,10 +27,31 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
+            \Illuminate\Session\Middleware\StartSession::class,
+            'throttle:api',
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
+            'bindings',
         ],
-        
+        // 'tenant' => [
+        //     \App\Http\Middleware\EncryptCookies::class,
+        //     \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        //     \Illuminate\Session\Middleware\StartSession::class,
+        //     \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        //     \App\Http\Middleware\VerifyCsrfToken::class,
+        //     \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        //     \App\Http\Middleware\HandleInertiaRequests::class,
+        // ]
+    ];
+
+    protected $routeMiddleware = [
+        'auth.central' => [
+            \App\Http\Middleware\CentralMiddleware::class,
+        ]
     ];
 
     protected $middlewareAliases = [

@@ -21,7 +21,6 @@ class TenantSeeder extends Seeder
             
             // Call the TenantDatabaseSeeder for each tenant
             $this->call([
-                UsersTableSeeder::class,
                 MaterialSeeder::class,
                 UnitSizeSeeder::class,
                 SupplierSeeder::class,

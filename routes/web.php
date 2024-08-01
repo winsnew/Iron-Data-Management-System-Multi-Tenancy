@@ -80,16 +80,6 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Middleware\HandleInertiaRequests;
 
 
-Route::middleware([HandleInertiaRequests::class])->group(function () {
-    Route::get('/rent', [AdminTenantController::class, 'index']);
-    Route::get('/rent/login', [AdminTenantController::class, 'showLogin']);
-    Route::post('/rent/login', [AdminTenantController::class, 'login']);
-
-    
-        Route::get('/dashboard', [AdminTenantController::class, 'tes']);
-        Route::get('/dashboard/tenant', [AdminTenantController::class, 'tes2']);
-});
-
 
 //Auth
 

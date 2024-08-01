@@ -20,7 +20,7 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (auth()->guard('tenant')->attempt($credentials)) {
+        if (auth()->attempt($credentials)) {
             return redirect('/'); // Adjust the redirect path as needed
         }
 
@@ -29,7 +29,7 @@ class AuthController extends Controller
 
     public function logout()
     {
-        auth()->guard('tenant')->logout();
+        auth()->logout();
         return redirect('/login');
     }
 }
