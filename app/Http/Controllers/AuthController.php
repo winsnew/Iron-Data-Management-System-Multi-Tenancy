@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AuthController extends Controller
@@ -20,8 +21,8 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (auth()->attempt($credentials)) {
-            return redirect('/'); // Adjust the redirect path as needed
+        if (Auth::guard('tenant')->attempt($credentials)) {
+            return redirect('/'); 
         }
 
         return back()->withErrors(['email' => 'Invalid credentials']);
@@ -29,7 +30,7 @@ class AuthController extends Controller
 
     public function logout()
     {
-        auth()->logout();
+        Auth::guard('tenant')->logout();
         return redirect('/login');
     }
 }

@@ -17,7 +17,7 @@ return [
         'guard' => 'central',
         'passwords' => 'central',
     ],
-    
+
 
     /*
     |--------------------------------------------------------------------------
@@ -37,10 +37,14 @@ return [
     */
 
     'guards' => [
-        'central' => [
-            'driver' => 'sanctum',
+        'web' => [
+            'driver' => 'session',
             'provider' => 'users',
         ],
+        // 'api' => [
+        //     'driver' => 'sanctum',
+        //     'provider' => 'users',
+        // ],
         'central' => [
             'driver' => 'session',
             'provider' => 'admins',

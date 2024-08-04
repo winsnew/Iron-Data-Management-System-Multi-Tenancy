@@ -3,16 +3,15 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
+
 
 class CentralAuth
 {
     public function handle($request, Closure $next, $guard = 'central')
     {
         if (!Auth::guard($guard)->check()) {
-            return redirect('/login');
+            return response()->json(['message' => 'Unauthorized.'], 401);
         }
 
         return $next($request);

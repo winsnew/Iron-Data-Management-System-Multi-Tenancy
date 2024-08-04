@@ -33,16 +33,5 @@ class TenantSeeder extends Seeder
 
             tenancy()->end();
         }
-        // $this->call([
-        //     UsersTableSeeder::class,
-        //     MaterialSeeder::class,
-        //     UnitSizeSeeder::class,
-        //     SupplierSeeder::class,
-        //     RawProductSeeder::class,
-        //     WarehouseSeeder::class,
-        //     GoodsProductSeeder::class,
-        //     CustomerSeeder::class,
-        //     SemiRawProductSeeder::class,
-        // ]);
     }
 }

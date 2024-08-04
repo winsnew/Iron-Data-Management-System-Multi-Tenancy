@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+class UserCentral extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'name', 'email', 'password', 'domain',
+        'name', 'email', 'password', 'domain', 'tenant_id'
     ];
+
 
 }
