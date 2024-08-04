@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\ManageTenant;
 
+use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
-use App\Models\User;
+use App\Models\Tenants\User;
+use App\Models\UserCentral;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-<<<<<<< HEAD
-use Illuminate\Support\Facades\Auth;
-=======
 use Illuminate\Support\Facades\DB;
->>>>>>> e0d6f0e0fc13eb4b711ce13335c702cda739b408
+
 
 class AdminTenantController extends Controller
 {
@@ -33,6 +33,7 @@ class AdminTenantController extends Controller
         return response()->json($tenants);
     }
 
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -46,21 +47,28 @@ class AdminTenantController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
-        
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'domain' => $request->domain,
-        ]);
-
-
         $tenant = Tenant::create(['id' => $request->domain]);
-
 
         $tenant->domains()->create([
             'domain' => $request->domain . '.' . env('APP_CENTRAL_DOMAIN'),
         ]);
+
+        $user = UserCentral::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'domain' => $request->domain,
+            'tenant_id' => $request->domain
+        ]);
+
+        tenancy()->initialize($tenant);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+        ]);
+
 
         return response()->json([
             'message' => 'Tenant created successfully!',
@@ -74,47 +82,38 @@ class AdminTenantController extends Controller
             'domain' => 'required|string|max:255|unique:tenants,id,' . $id,
             'status' => 'required|string|max:255',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-    
+
+        DB::beginTransaction();
+
         try {
-            // Find the tenant by ID
+
             $tenant = Tenant::findOrFail($id);
-    
-            // Find the associated user by the tenant's current domain
-            $user = User::where('domain', $tenant->id)->firstOrFail();
-    
-            // Update the tenant domain if it has changed
+
             if ($tenant->id !== $request->domain) {
-                // Update user domain
-                $user->domain = $request->domain;
-                $user->save();
-    
-                // Update tenant id
-                $tenant->id = $request->domain;
-    
-                $tenant->domains()->updateOrCreate(
-                    ['tenant_id' => $tenant->id],
-                    ['domain' => $request->domain . '.' . env('APP_CENTRAL_DOMAIN')]
+
+                $newdomain = $request->domain;
+                $tenant->domains()->update(
+                    ['domain' => $newdomain]
                 );
+
+
+                UserCentral::where('domain', $id)->update(['domain' => $newdomain, 'tenant_id' => $id]);
             }
-    
-            // Update tenant status
+
             $tenant->status = $request->status;
             $tenant->save();
-    
-            // Commit the transaction
+
             DB::commit();
-    
+
             return response()->json([
                 'message' => 'Tenant updated successfully!',
                 'tenant' => $tenant,
             ], 200);
-    
         } catch (\Exception $e) {
-            // Rollback the transaction in case of an error
             DB::rollBack();
             return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
@@ -123,7 +122,6 @@ class AdminTenantController extends Controller
     public function destroy($id)
     {
         DB::beginTransaction();
-
         try {
             $tenant = Tenant::find($id);
 
@@ -134,28 +132,20 @@ class AdminTenantController extends Controller
 
             $email = $tenant->data['email'] ?? null;
             if ($email) {
-                $user = User::where('email', $email)->first();
+                // Find and delete the user if they exist
+                $user = UserCentral::where('email', $email)->first();
                 if ($user) {
                     $user->delete();
                 }
             }
-            $databaseName = $tenant->database()->getName();
-
-            if (DB::select("SHOW DATABASES LIKE '{$databaseName}'")) {
-                try {
-                    DB::statement("DROP DATABASE IF EXISTS `{$databaseName}`");
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return response()->json(['error' => "Error dropping database '{$databaseName}': " . $e->getMessage()], 500);
-                }
-            }
-
             $tenant->delete();
 
             DB::commit();
             return response()->json(['message' => 'Tenant deleted successfully!'], 200);
         } catch (\Exception $e) {
+           
             DB::rollBack();
+            Log::error("An error occurred while deleting tenant: " . $e->getMessage());
             return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
     }
