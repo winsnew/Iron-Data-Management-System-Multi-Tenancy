@@ -32,6 +32,8 @@ use App\Http\Controllers\Production\{
     ResultDetailController
 };
 
+use App\Http\Controllers\Production\RemakeProduction;
+
 // Purchase Controllers
 use App\Http\Controllers\Purchase\{
     OrderController,
@@ -100,6 +102,7 @@ Route::middleware([
             'unit-size' => UnitSizeController::class,
         ]);
 
+
         Route::resources([
             'order' => OrderController::class,
             'order-detail-raw' => OrderDetailRawController::class,
@@ -113,11 +116,9 @@ Route::middleware([
         ]);
 
         Route::resources([
-            'input' => InputController::class,
-            'inputdetail' => InputDetailController::class,
-            'result' => ResultController::class,
-            'resultdetail' => ResultDetailController::class
+            'inputs' => InputController::class,
         ]);
+        
 
         Route::resources([
             'rawproductstock' => RawProductStockController::class,

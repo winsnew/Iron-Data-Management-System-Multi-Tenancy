@@ -9,8 +9,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Input extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $table = '';
+    protected $table = 'inputs';
     protected $fillable = [
-        
+        'production_no',
+        'date',
+        'material_weight',
+        'material_qty',
+        'status',
     ];
 }
