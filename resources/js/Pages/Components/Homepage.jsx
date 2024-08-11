@@ -313,15 +313,15 @@ export default function Homepage({ children }) {
             </Collapse>
             {/* BAGIAN PURCHASE */}
             {/* <ListItemButton> */}
-            <ListItemButton onClick={toggleSubPurchase}>
+            {/* <ListItemButton onClick={toggleSubPurchase}>
               <ListItemIcon>
                 <ShoppingCartIcon />
               </ListItemIcon>
               <ListItemText primary="Purchase" />
               {isSubPurchaseOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+            </ListItemButton> */}
             {/* Submenu for Purchase */}
-            <Collapse in={isSubPurchaseOpen} timeout="auto" unmountOnExit>
+            {/* <Collapse in={isSubPurchaseOpen} timeout="auto" unmountOnExit>
               <List
                 component="div"
                 disablePadding
@@ -385,16 +385,16 @@ export default function Homepage({ children }) {
                   <ListItemText primary="Buy" />
                 </ListItem>
               </List>
-            </Collapse>
-            <ListItemButton onClick={toggleSubStock}>
+            </Collapse> */}
+            {/* <ListItemButton onClick={toggleSubStock}>
               <ListItemIcon>
                 <InventoryTwoToneIcon />
               </ListItemIcon>
               <ListItemText primary="Stock" />
               {isSubStockOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+            </ListItemButton> */}
             {/* Submenu for Stock */}
-            <Collapse in={isSubStockOpen} timeout="auto" unmountOnExit>
+            {/* <Collapse in={isSubStockOpen} timeout="auto" unmountOnExit>
               <List
                 component="div"
                 disablePadding
@@ -444,7 +444,7 @@ export default function Homepage({ children }) {
                   <ListItemText primary="Opname" />
                 </ListItem>
               </List>
-            </Collapse>
+            </Collapse> */}
             <ListItemButton onClick={toggleSubProduction}>
               <ListItemIcon>
                 <OutputIcon />
@@ -469,7 +469,7 @@ export default function Homepage({ children }) {
                     ''}
                   button
                   component={InertiaLink}
-                  href="/input"
+                  href="/inputs"
                 >
                   <ListItemIcon>
                     <ArrowRightIcon />
@@ -477,7 +477,7 @@ export default function Homepage({ children }) {
                   <ListItemText primary="Input" />
                 </ListItem>
 
-                <ListItem
+                {/* <ListItem
                   className={component.startsWith('Production/Result') ?
                     'Mui-selected' :
                     ''}
@@ -489,7 +489,7 @@ export default function Homepage({ children }) {
                     <ArrowRightIcon />
                   </ListItemIcon>
                   <ListItemText primary="Result" />
-                </ListItem>
+                </ListItem> */}
 
               </List>
             </Collapse>

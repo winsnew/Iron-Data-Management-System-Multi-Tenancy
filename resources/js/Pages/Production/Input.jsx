@@ -1,220 +1,461 @@
-import React, { useState, useEffect } from 'react';
-import { Button, IconButton, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { CircularProgress } from '@mui/material';
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Homepage from '../Components/Homepage';
-import SearchIcon from '@mui/icons-material/Search';
+import React, { useState, useEffect } from "react";
+import {
+    Button,
+    TextField,
+    Grid,
+    Paper,
+    Typography,
+    Box,
+    Modal,
+    Snackbar,
+    FormControl,
+    MenuItem,
+    useTheme,
+    useMediaQuery,
+} from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridToolbar } from "@mui/x-data-grid";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
+import axios from "axios";
 import { Inertia } from '@inertiajs/inertia'
-import { InertiaLink } from '@inertiajs/inertia-react';
+// import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
+// import Box from "@mui/material/Box";
+import Homepage from "../Components/Homepage";
 
-const Input = () => {
-  const [filteredProductions, setFilteredProductions] = useState([]);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
-  const [productionToDeleteId, setProductionToDeleteId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+const Alert = (props) => <MuiAlert elevation={6} variant="filled" {...props} />;
 
-  useEffect(() => {
-    // Tambahkan logika filter sesuai kebutuhan Anda
-    // Contoh: Ambil data dari sumber lain atau lakukan pemrosesan data
-    const mockProductions = [
-      // ... contoh data produksi
+const Input = ({ inputs }) => {
+    const [filteredItems, setFilteredItems] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [items, setItems] = useState([]);
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+        useState(false);
+    const [formData, setFormData] = useState({
+        production_no: "",
+        date: "",
+        material_weight: "",
+        material_qty: "",
+        status: "",
+    });
+    const [selectedItemId, setSelectedItemId] = useState(null);
+    const [itemToDeleteId, setItemToDeleteId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const theme = useTheme();
+    // const url = window.location.href;
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
+    useEffect(() => {
+        const filtered = inputs.filter((item) =>
+            item.production_no.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredItems(filtered);
+    }, [inputs, searchTerm]);
+
+    const refreshPage = async () => {
+      const url = window.location.href; // Sesuaikan dengan URL endpoint Anda
+
+      Inertia.visit(url, {
+          method: 'get',
+          replace: true, // Mengganti URL di history dengan URL yang sama
+          preserveState: true, // Menjaga state saat navigasi
+          preserveScroll: true, // Menjaga scroll posisi
+          onSuccess: (response) => {
+              // Menyaring data dari respons untuk memperbarui state
+              const inputs = response.props.inputs; // Pastikan ini sesuai dengan nama prop yang digunakan
+              setItems(inputs); // Set data baru
+              setFilteredItems(inputs); // Update filteredItems jika perlu
+          },
+          onError: (error) => {
+              console.error('Error fetching items:', error);
+              // Optionally handle error here
+          },
+      });
+    };
+
+    const handleAddItem = async () => {
+        try {
+            await axios.post("/inputs", formData);
+            closeAddItemModal();
+            refreshPage();
+            openSnackbar("success", "Item added successfully");
+        } catch (error) {
+            console.error("Error adding item:", error);
+            openSnackbar(
+                "error",
+                error.response?.data?.error || "Error adding item"
+            );
+        }
+    };
+
+    const handleDeleteItem = (id) => {
+        setItemToDeleteId(id);
+        openDeleteConfirmationModal();
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`/inputs/${itemToDeleteId}`);
+            closeDeleteConfirmationModal();
+            refreshPage();
+            openSnackbar("success", "Item deleted successfully.");
+        } catch (error) {
+            console.error("Error deleting item:", error);
+            openSnackbar("error", "Error deleting item.");
+        }
+    };
+
+    const handleEditItem = (item) => {
+        setSelectedItemId(item.id);
+        setFormData({
+            production_no: item.production_no,
+            date: item.date,
+            material_weight: item.material_weight,
+            material_qty: item.material_qty,
+            status: item.status,
+        });
+        openAddItemModal();
+    };
+
+    const handleUpdateItem = async () => {
+        try {
+            await axios.put(`/inputs/${selectedItemId}`, formData);
+            closeAddItemModal();
+            setSelectedItemId(null);
+            refreshPage();
+            openSnackbar("success", "Item updated successfully");
+        } catch (error) {
+            console.error("Error updating item:", error);
+            openSnackbar(
+                "error",
+                error.response?.data?.error || "Error updating item"
+            );
+        }
+    };
+
+    const handleSaveItem = () => {
+        if (selectedItemId) {
+            handleUpdateItem();
+        } else {
+            handleAddItem();
+        }
+    };
+
+    const handleCancel = () => {
+        closeAddItemModal();
+    };
+
+    const openAddItemModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const closeAddItemModal = () => {
+        setIsModalOpen(false);
+        setFormData({
+            production_no: "",
+            date: "",
+            material_weight: "",
+            material_qty: "",
+            status: "",
+        });
+        setSelectedItemId(null);
+    };
+
+    const openDeleteConfirmationModal = () => {
+        setIsDeleteConfirmationOpen(true);
+    };
+
+    const closeDeleteConfirmationModal = () => {
+        setIsDeleteConfirmationOpen(false);
+        setItemToDeleteId(null);
+    };
+
+    const openSnackbar = (severity, message) => {
+        setSnackbarSeverity(severity);
+        setSnackbarMessage(message);
+        setSnackbarOpen(true);
+    };
+
+    const closeSnackbar = () => {
+        setSnackbarOpen(false);
+    };
+
+    const handleFormChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const columns = [
+        { field: "no", headerName: "No", width: 50 },
+        { field: "production_no", headerName: "Production No", width: 150 },
+        { field: "date", headerName: "Date", width: 150 },
+        { field: "material_weight", headerName: "Material Weight", width: 150 },
+        { field: "material_qty", headerName: "Material Qty", width: 150 },
+        {
+            field: "status",
+            headerName: "Status",
+            width: 150,
+            renderCell: (params) => (
+                <span>{params.row.status === "0" ? "Active" : "Inactive"}</span>
+            ),
+        },
+        {
+            field: "setting",
+            headerName: "Setting",
+            width: 150,
+            renderCell: (params) => (
+                <>
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        onClick={() => handleEditItem(params.row)}
+                    />
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={() => handleDeleteItem(params.row.id)}
+                    />
+                </>
+            ),
+        },
     ];
 
-    const filtered = mockProductions.filter((production) =>
-      production.productionNo.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProductions(filtered);
-  }, [searchTerm]);
+    const rows = filteredItems.map((item, index) => ({
+        id: item.id,
+        no: index + 1,
+        production_no: item.production_no,
+        date: item.date,
+        material_weight: item.material_weight,
+        material_qty: item.material_qty,
+        status: item.status,
+    }));
 
-  const closeSnackbar = () => {
-    setSnackbarOpen(false);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleDeleteProduction = (id) => {
-    setProductionToDeleteId(id);
-    openDeleteConfirmationModal();
-  };
-
-  const confirmDeleteProduction = async () => {
-    try {
-      // Perform deletion logic here
-      closeDeleteConfirmationModal();
-      // Show success notification
-      setSnackbarSeverity('success');
-      setSnackbarMessage('Production deleted successfully');
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error('Error deleting production:', error);
-      // Show error notification
-      setSnackbarSeverity('error');
-      setSnackbarMessage('Error deleting production');
-      setSnackbarOpen(true);
-    }
-  };
-
-  const handleEditProduction = (production) => {
-    // Logic to handle editing
-  };
-
-  const openDeleteConfirmationModal = () => {
-    setIsDeleteConfirmationOpen(true);
-  };
-
-  const closeDeleteConfirmationModal = () => {
-    setIsDeleteConfirmationOpen(false);
-    setProductionToDeleteId(null);
-  };
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  return (
-    <Homepage>
-    <div>
-      {/* Your Snackbar component */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={closeSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        style={{ marginBottom: '30px', marginRight: '30px'}}
-      >
-        <MuiAlert elevation={6} variant="filled" onClose={closeSnackbar} severity={snackbarSeverity}>
-          {snackbarMessage}
-        </MuiAlert>
-      </Snackbar>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant='h4'>
-          Input
-        </Typography>
-        <InertiaLink
-            href='/inputdetail'
-            style={{
-                size: 'small',
-             }}
-        >
-            <Button variant="contained" color="primary" size="small" >
-                Add new
-            </Button>
-        </InertiaLink>
-      </div>
-      <hr style={{color: 'white'}} />
-      {/* Your search input */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
-        <Typography>
-        </Typography>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* <Typography variant='h4'>
-            <SearchIcon />
-          </Typography> */}
-          <TextField
-            label="Search.."
-            variant="outlined"
-            value={searchTerm}
-            onChange={handleSearch}
-            style={{ width: '150px' }}
-            size="small"
-          />
-        </div>
-      </div>
-
-
-      {/* Your table */}
-      <TableContainer component={Paper} style={{ marginTop: '20px' }}>
-        <Table size="small">
-          <TableHead style={{ height: '3em' }}>
-            <TableRow>
-              <TableCell><b>No.</b></TableCell>
-              <TableCell><b>Production No</b></TableCell>
-              <TableCell><b>Date</b></TableCell>
-              <TableCell><b>Material Weight (kg)</b></TableCell>
-              <TableCell><b>Material Qty (coil)</b></TableCell>
-              <TableCell><b>Status</b></TableCell>
-              <TableCell><b>Setting</b></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredProductions.length > 0 ? (
-              filteredProductions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((production, index) => {
-                // const overallIndex = page * rowsPerPage + index + 1;
-                return (
-              <TableRow key={production.id}>
-                <TableCell>{index + 1}</TableCell>
-                
-                <TableCell>{production.productionNo}</TableCell>
-                <TableCell>{production.date}</TableCell>
-                <TableCell>{production.materialWeight}</TableCell>
-                <TableCell>{production.materialQty}</TableCell>
-                <TableCell>{production.status}</TableCell>
-                <TableCell>
-                  {/* Your edit and delete buttons */}
-                  <IconButton
-                    color="secondary"
-                    size='small'
-                    onClick={() => handleDeleteProduction(production.id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                  <IconButton
+    return (
+        <Homepage>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={closeSnackbar}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                style={{ marginBottom: "30px", marginRight: "30px" }}
+            >
+                <Alert severity={snackbarSeverity} onClose={closeSnackbar}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                }}
+            >
+                <Typography variant="h4">Production</Typography>
+                <Button
+                    variant="contained"
                     color="primary"
-                    size='small'
-                    onClick={() => handleEditProduction(production)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-                );
-                })) : ( 
-                  <TableRow>
-                  <TableCell align="center" colSpan={7}>No data available</TableCell>
-                </TableRow>
-              )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Your pagination component */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredProductions.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        style={{
-            size: 'small',
-         }}
-      />
-
-      {/* Your delete confirmation modal */}
-      <Box>
-        {/* Your delete confirmation modal content */}
-      </Box>
-    </div>
-    </Homepage>
-  );
+                    size="small"
+                    onClick={openAddItemModal}
+                >
+                    Add New
+                </Button>
+            </div>
+            <hr style={{ color: "white" }} />
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: "15px",
+                }}
+            >
+                <TextField
+                    label="Search"
+                    variant="outlined"
+                    size="small"
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    style={{ marginBottom: "15px" }}
+                />
+            </div>
+            <Paper style={{ height: 400, width: "100%" }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    pageSize={rowsPerPage} // <-- Pastikan ini menggunakan rowsPerPage
+                    rowsPerPageOptions={[5, 10, 25]}
+                    pagination
+                    onPageSizeChange={(newPageSize) =>
+                        setRowsPerPage(newPageSize)
+                    }
+                    paginationMode="server"
+                    onPageChange={(newPage) => setPage(newPage)}
+                    components={{ Toolbar: GridToolbar }}
+                />
+            </Paper>
+            <Modal open={isModalOpen} onClose={closeAddItemModal}>
+                <Box
+                    sx={{
+                        width: isSmallScreen ? "100%" : 600,
+                        padding: 4,
+                        margin: "auto",
+                        bgcolor: "background.paper",
+                        borderRadius: 1,
+                    }}
+                >
+                    <Typography variant="h6" component="h2" gutterBottom>
+                        {selectedItemId
+                            ? "Edit Production"
+                            : "Add New Production"}
+                    </Typography>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Production No"
+                                name="production_no"
+                                value={formData.production_no}
+                                onChange={handleFormChange}
+                                variant="outlined"
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                label="Date"
+                                name="date"
+                                value={formData.date}
+                                onChange={handleFormChange}
+                                variant="outlined"
+                                margin="normal"
+                                InputLabelProps={{ shrink: true }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                type="number"
+                                label="Material Weight"
+                                name="material_weight"
+                                value={formData.material_weight}
+                                onChange={handleFormChange}
+                                variant="outlined"
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                type="number"
+                                label="Material Qty"
+                                name="material_qty"
+                                value={formData.material_qty}
+                                onChange={handleFormChange}
+                                variant="outlined"
+                                margin="normal"
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <FormControl fullWidth margin="normal">
+                                <TextField
+                                    select
+                                    label="Status"
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleFormChange}
+                                >
+                                    <MenuItem value="0">Active</MenuItem>
+                                    <MenuItem value="1">Inactive</MenuItem>
+                                </TextField>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            marginTop: 2,
+                        }}
+                    >
+                        <Button
+                            onClick={handleCancel}
+                            variant="outlined"
+                            color="secondary"
+                            style={{ marginRight: 10 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveItem}
+                            variant="contained"
+                            color="primary"
+                        >
+                            {selectedItemId ? "Update" : "Save"}
+                        </Button>
+                    </Box>
+                </Box>
+            </Modal>
+            <Modal
+                open={isDeleteConfirmationOpen}
+                onClose={closeDeleteConfirmationModal}
+            >
+                <Box
+                    sx={{
+                        width: 400,
+                        padding: 4,
+                        margin: "auto",
+                        bgcolor: "background.paper",
+                        borderRadius: 1,
+                    }}
+                >
+                    <Typography variant="h6" component="h2" gutterBottom>
+                        Confirm Deletion
+                    </Typography>
+                    <Typography variant="body1" gutterBottom>
+                        Are you sure you want to delete this item?
+                    </Typography>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            marginTop: 2,
+                        }}
+                    >
+                        <Button
+                            onClick={closeDeleteConfirmationModal}
+                            variant="outlined"
+                            color="secondary"
+                            style={{ marginRight: 10 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={confirmDelete}
+                            variant="contained"
+                            color="primary"
+                        >
+                            Delete
+                        </Button>
+                    </Box>
+                </Box>
+            </Modal>
+        </Homepage>
+    );
 };
 
 export default Input;
