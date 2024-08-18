@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('ms_supplier', function (Blueprint $table) {
             $table->increments('id')->index();
-            $table->string('code');
-            $table->string('name');
+            $table->string('code')->unique();;
+            $table->string('name')->unique();;
             $table->string('type');
             $table->string('pic');
             $table->text('address');

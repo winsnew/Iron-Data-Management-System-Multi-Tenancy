@@ -13,6 +13,7 @@ use App\Http\Controllers\AuthController;
 
 // Master Controllers
 use App\Http\Controllers\Master\{
+    CustomerChartController,
     MaterialController,
     RawProductController,
     GoodsProductController,
@@ -90,6 +91,7 @@ Route::middleware([
     // // // Route
     Route::middleware([TenantAuthenticate::class])->group(function () {
         Route::get('/', [HomeController::class, 'index']);
+        Route::get('/getUser', [HomeController::class, 'getUserData']);
         Route::get('/', [DashboardController::class, 'index']);
         // Data Master
         Route::resources([
@@ -101,6 +103,8 @@ Route::middleware([
             'warehouse' => WarehouseController::class,
             'unit-size' => UnitSizeController::class,
         ]);
+        Route::get('/production-data', [CustomerChartController::class, 'product']);
+        Route::get('/customer-data', [CustomerChartController::class, 'customer']);
 
 
         Route::resources([

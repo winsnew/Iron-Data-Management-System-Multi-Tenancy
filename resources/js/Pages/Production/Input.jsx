@@ -59,31 +59,14 @@ const Input = ({ inputs }) => {
     }, [inputs, searchTerm]);
 
     const refreshPage = async () => {
-      const url = window.location.href; // Sesuaikan dengan URL endpoint Anda
-
-      Inertia.visit(url, {
-          method: 'get',
-          replace: true, // Mengganti URL di history dengan URL yang sama
-          preserveState: true, // Menjaga state saat navigasi
-          preserveScroll: true, // Menjaga scroll posisi
-          onSuccess: (response) => {
-              // Menyaring data dari respons untuk memperbarui state
-              const inputs = response.props.inputs; // Pastikan ini sesuai dengan nama prop yang digunakan
-              setItems(inputs); // Set data baru
-              setFilteredItems(inputs); // Update filteredItems jika perlu
-          },
-          onError: (error) => {
-              console.error('Error fetching items:', error);
-              // Optionally handle error here
-          },
-      });
+        window.location.reload(); 
     };
 
     const handleAddItem = async () => {
         try {
             await axios.post("/inputs", formData);
             closeAddItemModal();
-            refreshPage();
+            await refreshPage();
             openSnackbar("success", "Item added successfully");
         } catch (error) {
             console.error("Error adding item:", error);
@@ -103,7 +86,7 @@ const Input = ({ inputs }) => {
         try {
             await axios.delete(`/inputs/${itemToDeleteId}`);
             closeDeleteConfirmationModal();
-            refreshPage();
+            await refreshPage();
             openSnackbar("success", "Item deleted successfully.");
         } catch (error) {
             console.error("Error deleting item:", error);
@@ -128,7 +111,7 @@ const Input = ({ inputs }) => {
             await axios.put(`/inputs/${selectedItemId}`, formData);
             closeAddItemModal();
             setSelectedItemId(null);
-            refreshPage();
+            await refreshPage();
             openSnackbar("success", "Item updated successfully");
         } catch (error) {
             console.error("Error updating item:", error);

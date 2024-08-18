@@ -14,13 +14,29 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 function CustomToolbar({ drawerWidth, toggleDrawer, openDrawer }) {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
+    const [userName, setUserName] = useState('Guest');
 
     const isMenuOpen = Boolean(anchorEl);
     const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+
+    useEffect(() => {
+        // Fetch user data from the backend
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.get('/getUser'); // Adjust the URL if needed
+                setUserName(response.data.userName);
+            } catch (error) {
+                console.error('Failed to fetch user data:', error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event);
@@ -161,7 +177,7 @@ function CustomToolbar({ drawerWidth, toggleDrawer, openDrawer }) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h4" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-                        R-TUBE
+                        R-TUBE {userName}
                     </Typography>
                     <IconButton color="inherit">
                         {/* <Badge badgeContent={4} color="secondary">
@@ -170,7 +186,7 @@ function CustomToolbar({ drawerWidth, toggleDrawer, openDrawer }) {
                     </IconButton>
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <IconButton size="large" aria-label="show 4 new mails" color="inherit">
-                            <Badge badgeContent={4} color="error">
+                            <Badge  color="error">
                                 <MailIcon />
                             </Badge>
                         </IconButton>
@@ -179,7 +195,7 @@ function CustomToolbar({ drawerWidth, toggleDrawer, openDrawer }) {
                             aria-label="show 17 new notifications"
                             color="inherit"
                         >
-                            <Badge badgeContent={17} color="error">
+                            <Badge color="error">
                                 <NotificationsIcon />
                             </Badge>
                         </IconButton>

@@ -143,7 +143,7 @@ class AdminTenantController extends Controller
             DB::commit();
             return response()->json(['message' => 'Tenant deleted successfully!'], 200);
         } catch (\Exception $e) {
-           
+
             DB::rollBack();
             Log::error("An error occurred while deleting tenant: " . $e->getMessage());
             return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
